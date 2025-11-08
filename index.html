@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Blocs type Vittascience – Validation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    html, body { height: 100%; margin: 0; }
+    #wrap { display: grid; grid-template-columns: 360px 1fr; height: 100vh; }
+    #sidebar { padding: 12px; border-right: 1px solid #eee; font-family: system-ui, sans-serif; }
+    #status { margin-top: 12px; padding: 10px; border-radius: 8px; background:#fafafa; border:1px solid #eee; }
+    #actions { display: flex; gap: 8px; margin-top: 8px; }
+    button { padding: 8px 12px; border-radius: 10px; border:1px solid #ddd; cursor:pointer; }
+    #blocklyDiv { width: 100%; height: 100%; min-height: 400px; }
+    .err { border-color:#ffcdd2 !important; background:#ffebee !important; }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <div id="sidebar">
+      <h3>Assembler les blocs</h3>
+      <p>Objectif : <b>au démarrage</b>, répéter indéfiniment :<br>
+      1) afficher une icône cœur, 2) attendre 1 s, 3) effacer l’écran.</p>
+
+      <div id="actions">
+        <button id="validateBtn" disabled>Valider</button>
+        <button id="resetBtn" disabled>Réinitialiser</button>
+      </div>
+      <div id="status">Chargement de Blockly…</div>
+      <div id="netHint" style="display:none; font-size:14px; opacity:.8; margin-top:8px;">
+        Astuce : si ça reste vide, le réseau bloque peut-être les CDNs.
+        Essaie sur un autre réseau, ou je te fournis un ZIP “offline”.
+      </div>
+    </div>
+    <div id="blocklyDiv"></div>
+  </div>
+
+  <!-- Toolbox -->
+  <xml id="toolbox" style="display:none">
+    <category name="Affichage" colour="#FF8C66">
+      <block type="vs_show_icon"></block>
+      <block type="vs_clear_display"></block>
+    </category>
+    <category name="Boucles" colour="#4CAF50">
+      <block type="controls_forever"></block>
+    </category>
+    <category name="Temps" colour="#8C9EFF">
+      <block type="vs_wait_seconds">
+        <value name="SECS"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+      </block>
+    </category>
+    <category name="Événements" colour="#00BFA5">
+      <block type="vs_on_start"></block>
+    </category>
+    <category name="Logique" colour="#9E9E9E">
+      <block type="controls_if"></block>
+    </category>
+    <category name="Math" colour="#6A1B9A">
+      <block type="math_number"><field name="NUM">1</field></block>
+    </category>
+    <category name="Variables" custom="VARIABLE" colour="#FFB300"></category>
+  </xml>
+
+  <!-- Loader multi-CDN -->
+  <script>
+    const CDNS = [
+      "https://unpkg.com/blockly@10.4.3/blockly.min.js",
+      "https://cdn.jsdelivr.net/npm/blockly@10.4.3/blockly.min.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/blockly/10.4.3/blockly.min.js"
+    ];
+    const statusEl = document.getElementById('status');
+    const validateBtn = document.getElementById('validateBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const netHint = document.getElementById('netHint');
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const s = document.cre
