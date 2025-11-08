@@ -63,11 +63,14 @@
 
   <!-- Loader multi-CDN -->
   <script>
-    const CDNS = [
-      "https://unpkg.com/blockly@10.4.3/blockly.min.js",
-      "https://cdn.jsdelivr.net/npm/blockly@10.4.3/blockly.min.js",
-      "https://cdnjs.cloudflare.com/ajax/libs/blockly/10.4.3/blockly.min.js"
-    ];
+    const script = document.createElement("script");
+script.src = "https://cdnjs.cloudflare.com/ajax/libs/blockly/10.4.3/blockly.min.js";
+script.onload = () => initExercise();
+script.onerror = () => {
+  statusEl.textContent = "❌ Impossible de charger Blockly.";
+  statusEl.classList.add("err");
+};
+document.head.appendChild(script);
     const statusEl = document.getElementById('status');
     const validateBtn = document.getElementById('validateBtn');
     const resetBtn = document.getElementById('resetBtn');
