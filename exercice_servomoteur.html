@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang=\"fr\">
+<head>
+  <meta charset=\"utf-8\" />
+  <title>Exercice – Servomoteur (style Vittascience)</title>
+  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+  <style>
+    :root{
+      --green:#2e7d32;     /* Boucles */
+      --blue:#1976d2;      /* Entrées/Sorties */
+      --red:#e53935;       /* Actionneurs */
+      --violet:#6a1b9a;    /* Divers */
+    }
+    html, body { height: 100%; margin: 0; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#fff; }
+    #wrap { display: grid; grid-template-columns: 420px 1fr; gap:0; height: 100vh; }
+    #sidebar { padding: 18px; border-right: 1px solid #eee; }
+    h1 { font-size: 20px; margin:0 0 10px; }
+    .lead { font-size: 15px; line-height: 1.4; color:#333; background:#fafafa; border:1px solid #eee; padding:10px 12px; border-radius:10px; }
+    #actions { display: flex; gap:10px; margin: 12px 0 8px; }
+    button { padding:8px 12px; border-radius:10px; border:1px solid #ddd; cursor:pointer; background:#fff; }
+    button.primary { background:#111827; color:#fff; border-color:#111827; }
+    #status { margin-top: 8px; padding: 10px 12px; border-radius:10px; border:1px solid #eee; background:#fafafa; }
+    #status.err { background:#ffebee; border-color:#ffcdd2; }
+    #status.ok { background:#f1f8e9; border-color:#c8e6c9; }
+    #blocklyDiv { width: 100%; height: 100%; min-height: 480px; }
+    .note { font-size: 12px; color:#666; margin-top:6px; }
+    .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; background:#eef2ff; color:#3730a3; border:1px solid #e0e7ff; }
+    .row { display:flex; align-items:center; gap:8px; }
+    .kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, \"Liberation Mono\", monospace; background:#f3f4f6; border:1px solid #e5e7eb; border-bottom-width:2px; padding:1px 6px; border-radius:6px; }
+  </style>
+</head>
+<body>
+  <div id=\"wrap\">
+    <aside id=\"sidebar\">
+      <h1>Assembler les blocs</h1>
+      <div class=\"lead\">
+        <b>Objectif&nbsp;:</b> reconstituer le programme suivant (style Vittascience).<br>
+        <span class=\"pill\">Répéter indéfiniment</span> →
+        <span class=\"pill\">si le bouton A est appuyé alors</span> →
+        <span class=\"pill\">[Servomoteur] positionner l’angle à <b>90°</b> sur la broche <b>P14</b></span>
+      </div>
+
+      <div id=\"actions\">
+        <button id=\"validateBtn\" class=\"primary\" disabled>Valider</button>
+        <button id=\"resetBtn\" disabled>Réinitialiser</button>
+      </div>
+      <div id=\"status\">Chargement de l’exercice…</div>
+      <div class=\"note\" id=\"netHint\" style=\"display:none;\">
+        Si la zone à droite reste vide, le réseau bloque peut‑être les CDN. Je peux fournir une
+        version <i>offline</i> si besoin.
+      </div>
+      <hr style=\"margin:14px 0; border:none; border-top:1px solid #eee;\">
+      <div style=\"font-size:13px; color:#444\">
+        <div class=\"row\"><div class=\"pill\" style=\"background:#e8f5e9; border-color:#c8e6c9; color:#1b5e20;\">Boucles</div> <span>→ « Répéter indéfiniment »</span></div>
+        <div class=\"row\"><div class=\"pill\" style=\"background:#e3f2fd; border-color:#bbdefb; color:#0d47a1;\">Entrées/Sorties</div> <span>→ « si le bouton est appuyé »</span></div>
+        <div class=\"row\"><div class=\"pill\" style=\"background:#ffebee; border-color:#ffcdd2; color:#b71c1c;\">Actionneurs</div> <span>→ « Servomoteur → angle sur broche »</span></div>
+      </div>
+      <p class=\"note\">Conseil&nbsp;: assemble les blocs à l’intérieur de la boucle, puis règle <span class=\"kbd\">A</span>, <span class=\"kbd\">90</span>, <span class=\"kbd\">P14</span>.</p>
+    </aside>
+
+    <main id=\"blocklyDiv\"></main>
+  </div>
+
+  <!-- Toolbox -->
+  <xml id=\"toolbox\" style=\"display:none\">
+    <category name=\"Boucles\" colour=\"#2e7d32\">
+      <block type=\"vs_forever\"></block>
+    </category>
+    <category name=\"Entrées/Sorties\" colour=\"#1976d2\">
+      <block type=\"vs_if_button_pressed\">
+        <field name=\"BTN\">A</field>
+      </block>
+    </category>
+    <category name=\"Actionneurs\" colour=\"#e53935\">
+      <block type=\"vs_servo_set\">
+        <field name=\"PIN\">P14</field>
+        <value name=\"ANGLE\">
+          <shadow type=\"math_number\"><field name=\"NUM\">90</field></shadow>
+        </value>
+      </block>
+    </category>
+    <sep></sep>
+    <category name=\"Math\" colour=\"#6a1b9a\">
+      <block type=\"math_number\"><field name=\"NUM\">90</field></block>
+    </category>
+  </xml>
+
+  <script>
+    const CDNS = [
+      \"https://unpkg.com/blockly@10.4.3/blockly.min.js\",
+      \"https://cdn.jsdelivr.net/npm/blockly@10.4.3/blockly.min.js\",
+      \"https://cdnjs.cloudflare.com/ajax/libs/blockly/10.4.3/blockly.min.js\"
+    ];
+    const statusEl = document.getElementById('status');
+    const validateBtn = document.getElementById('validateBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const netHint = document.getElementById('netHint');
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src; s.onload = resolve; s.onerror = reject; document.head.appendChild(s);
+      });
+    }
+    (async () => {
+      let ok = false;
+      for (const url of CDNS) {
+        try { await loadScript(url); ok = true; break; } catch(e){}
+      }
+      if (!ok || typeof Blockly === \"undefined\") {
+        statusEl.textContent = \"❌ Impossible de charger la bibliothèque de blocs (CDN bloqué ?)\";
+        statusEl.classList.add(\"err\"); netHint.style.display = \"block\";
+        return;
+      }
+      initExercise();
+    })();
+
+    function initExercise(){
+      Blockly.Blocks['vs_forever'] = {
+        init: function() {
+          this.appendDummyInput().appendField(\"Répéter indéfiniment\");
+          this.appendStatementInput(\"DO\");
+          this.setColour(\"#2e7d32\"); this.setTooltip(\"Boucle sans fin\");
+        }
+      };
+
+      Blockly.Blocks['vs_if_button_pressed'] = {
+        init: function() {
+          this.appendDummyInput()
+              .appendField(\"si le bouton\")
+              .appendField(new Blockly.FieldDropdown([[\"A\",\"A\"],[\"B\",\"B\"],[\"Logo\",\"LOGO\"]]), \"BTN\")
+              .appendField(\"est appuyé alors\");
+          this.appendStatementInput(\"DO\");
+          this.setPreviousStatement(true); this.setNextStatement(true);
+          this.setColour(\"#1976d2\");
+        }
+      };
+
+      Blockly.Blocks['vs_servo_set'] = {
+        init: function() {
+          this.appendDummyInput().appendField(\"[Servomoteur] contrôler l'angle à\");
+          this.appendValueInput(\"ANGLE\").setCheck(\"Number\");
+          this.appendDummyInput()
+              .appendField(\"° sur la broche\")
+              .appendField(new Blockly.FieldDropdown([
+                [\"P0\",\"P0\"],[\"P1\",\"P1\"],[\"P2\",\"P2\"],
+                [\"P8\",\"P8\"],[\"P9\",\"P9\"],[\"P10\",\"P10\"],
+                [\"P12\",\"P12\"],[\"P13\",\"P13\"],[\"P14\",\"P14\"],[\"P15\",\"P15\"]
+              ]), \"PIN\");
+          this.setPreviousStatement(true); this.setNextStatement(true);
+          this.setColour(\"#e53935\");
+        }
+      };
+
+      const workspace = Blockly.inject('blocklyDiv', {
+        toolbox: document.getElementById('toolbox'),
+        trashcan: true,
+        grid: {spacing: 24, length: 3, colour: '#eee', snap: true},
+        zoom: {controls: true, wheel: true},
+        renderer: 'zelos'
+      });
+
+      function seed(){
+        const xml = Blockly.utils.xml.textToDom(`
+          <xml xmlns=\"https://developers.google.com/blockly/xml\">
+            <block type=\"vs_forever\" x=\"40\" y=\"40\"></block>
+            <block type=\"vs_if_button_pressed\" x=\"60\" y=\"220\"><field name=\"BTN\">A</field></block>
+            <block type=\"vs_servo_set\" x=\"80\" y=\"360\"><field name=\"PIN\">P14</field>
+              <value name=\"ANGLE\"><block type=\"math_number\"><field name=\"NUM\">90</field></block></value>
+            </block>
+            <block type=\"math_number\" x=\"320\" y=\"360\"><field name=\"NUM\">90</field></block>
+          </xml>
+        `);
+        Blockly.Xml.domToWorkspace(xml, workspace);
+      }
+      seed();
+
+      function validate(){
+        const tops = workspace.getTopBlocks(true);
+        const forever = tops.find(b => b.type === 'vs_forever');
+        if (!forever) return fail(\"Ajoute la boucle « Répéter indéfiniment ».\");
+        const inside = forever.getInputTargetBlock('DO');
+        if (!inside || inside.type !== 'vs_if_button_pressed')
+          return fail(\"Place le bloc « si le bouton … est appuyé » à l’intérieur de la boucle.\");
+        const btn = inside.getFieldValue('BTN');
+        if (btn !== 'A') return fail(\"Le bouton doit être « A ».\");
+        const first = inside.getInputTargetBlock('DO');
+        if (!first || first.type !== 'vs_servo_set')
+          return fail(\"Ajoute le bloc « [Servomoteur] contrôler l'angle à … » dans le SI.\");
+        const pin = first.getFieldValue('PIN');
+        if (pin !== 'P14') return fail(\"La broche doit être « P14 ».\");
+        const angleBlock = first.getInputTargetBlock('ANGLE');
+        const angle = angleBlock && angleBlock.getFieldValue('NUM');
+        if (String(angle) !== '90') return fail(\"L'angle doit être « 90° ».\");
+        if (first.getNextBlock()) return fail(\"Il ne doit pas y avoir d'autre bloc après le servomoteur.\");
+        return pass(\"✅ Bravo ! Tu peux maintenant passer à la programmation sur Vittascience et tester sur la maquette.\");
+      }
+
+      function pass(msg){ statusEl.textContent = msg; statusEl.className = \"ok\"; }
+      function fail(msg){ statusEl.textContent = \"❌ \" + msg; statusEl.className = \"err\"; }
+
+      validateBtn.disabled = false; resetBtn.disabled = false;
+      statusEl.textContent = \"Assemble les blocs puis clique sur Valider.\";
+      netHint.style.display = \"none\";
+
+      validateBtn.onclick = validate;
+      resetBtn.onclick = () => { workspace.clear(); seed(); statusEl.textContent = \"Réinitialisé.\"; statusEl.className=\"\"]; };
+    }
+  </script>
+</body>
+</html>
